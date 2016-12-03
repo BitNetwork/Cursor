@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+      body {
+        cursor: none;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #board {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id='board'>Oh noes! Your browser daint support canvases.</canvas>
+    <script>
+      function isMobile() {
+        return /Mobile|Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+      }
+
+      function redraw() {
+        context.beginPath();
+        context.rect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "#fff";
+        context.fill();
+
+        for (var client in clients) {
+          var cursor = new Image();
+          cursor.src = clients[client].cursor;
+          context.drawImage(cursor, clients[client].x, clients[client].y, 25, 25 * cursor.height / cursor.width);
+        }
+      }
+
+      var canvas = document.getElementById("board");
+      canvas.width = innerWidth || document.body.clientWidth;
+      canvas.height = innerHeight || document.body.clientHeight;
+      var context = canvas.getContext("2d");
+      //var cursor = new Image();
+      //cursor.src = "cursor.cur";
+
+      function connect(server) {
+        var wsaddress = server || "wss://websocket-bitbyte.c9users.io";
+        ws = new WebSocket(wsaddress);
+        clients = {};
+        id = 0;
+
+        ws.onclose = function(event) {};
+
+        ws.onmessage = function(event) {
+          var message = JSON.parse(event.data);
+          console.log(message);
+
+          switch (message["action"]) {
+            case "conxEstablish":
+              id = message["id"];
+              clients[id] = {cursor: message["cursor"], x: 0, y: 0};
+              break;
+
+            case "clientMove":
+              clients[message.sender] = {cursor: message.cursor, x: message.x, y: message.y};
+
+              /*context.beginPath();
+              context.rect(0, 0, canvas.width, canvas.height);
+              context.fillStyle = "#fff";
+              context.fill();
+
+              for (var client in clients) {
+                var cursor = new Image();
+                cursor.src = clients[client].cursor;
+                context.drawImage(cursor, clients[client].x, clients[client].y, 25, 25 * cursor.height / cursor.width);
+              }*/
+              redraw();
+              break;
+          }
+          //context.drawImage(cursor, message.x, message.y, 75, 75 * cursor.height / cursor.width);
+        };
+      }
+
+      connect();
+
+      document.addEventListener("mousemove", function(event) {
+        if (document.pointerLockElement !== null || document.mozPointerLockElement !== undefined) {
+          ws.send(JSON.stringify({ action: "move", x: clients[id].x + event.movementX, y: clients[id].y + event.movementY }));
+          return 0;
+        }
+
+        ws.send(JSON.stringify({ action: "move", x: event.clientX, y: event.clientY }));
+
+        clients[id].x = event.clientX;
+        clients[id].y = event.clientY;
+      });
+
+      document.addEventListener("touchmove", function(event){
+        event.preventDefault();
+        var touch = event.touches[0];
+        clients[id].x = touch.screenX;
+        clients[id].y = touch.screenY;
+
+        console.log(innerHeight + ", " + innerWidth);
+
+        ws.send(JSON.stringify({ action: "move", x: touch.screenX, y: touch.screenY }));
+      });
+
+      document.addEventListener("click", function() {
+        if (document.documentElement.requestPointerLock) {
+          document.documentElement.requestPointerLock();
+        }
+        if (isMobile()) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+          } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+          }
+        }
+      });
+
+      window.addEventListener("resize", function(event) {
+        canvas.width = innerWidth || document.body.clientWidth;
+        canvas.height = innerHeight || document.body.clientHeight;
+
+        /*context.beginPath();
+        context.rect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "#fff";
+        context.fill();
+
+        for (var client in clients) {
+          context.drawImage(cursor, clients[client].x, clients[client].y, 75, 75 * cursor.height / cursor.width);
+        }*/
+        redraw();
+      });
+    </script>
+  </body>
+</html>

@@ -103,7 +103,9 @@ wss.on("request", function(request) {
     }
   });
   conx.on("close", function(reasonCode, description) {
-      console.log(lib_chalk.red.bold("Peer " + conx.remoteAddress + " disconnected."));
+    console.log(lib_chalk.red.bold("Peer " + conx.remoteAddress + " disconnected."));
+    delete clients[id];
+    broadcast(JSON.stringify({ action: "clientLeave", id: id}));
   });
 
 });

@@ -62,17 +62,11 @@
 
             case "clientMove":
               clients[message.sender] = {cursor: message.cursor, x: message.x, y: message.y};
+              redraw();
+              break;
 
-              /*context.beginPath();
-              context.rect(0, 0, canvas.width, canvas.height);
-              context.fillStyle = "#fff";
-              context.fill();
-
-              for (var client in clients) {
-                var cursor = new Image();
-                cursor.src = clients[client].cursor;
-                context.drawImage(cursor, clients[client].x, clients[client].y, 25, 25 * cursor.height / cursor.width);
-              }*/
+            case "clientLeave":
+              delete clients[message.id];
               redraw();
               break;
           }
@@ -84,7 +78,7 @@
 
       document.addEventListener("mousemove", function(event) {
         if (document.pointerLockElement !== null || document.mozPointerLockElement !== undefined) {
-          ws.send(JSON.stringify({ action: "move", x: clients[id].x + event.movementX, y: clients[id].y + event.movementY }));
+          ws.send(JSON.stringify({ action: "move", x: clients[id].x + (event.movementX * 5), y: clients[id].y + (event.movementY * 5) }));
           return 0;
         }
 
@@ -125,15 +119,6 @@
       window.addEventListener("resize", function(event) {
         canvas.width = innerWidth || document.body.clientWidth;
         canvas.height = innerHeight || document.body.clientHeight;
-
-        /*context.beginPath();
-        context.rect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = "#fff";
-        context.fill();
-
-        for (var client in clients) {
-          context.drawImage(cursor, clients[client].x, clients[client].y, 75, 75 * cursor.height / cursor.width);
-        }*/
         redraw();
       });
     </script>

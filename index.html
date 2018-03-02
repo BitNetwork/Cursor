@@ -43,7 +43,7 @@
       //cursor.src = "cursor.cur";
 
       function connect(server) {
-        var wsaddress = server || "wss://websocket-bitbyte.c9users.io";
+        var wsaddress = server || "wss://" + location.host;
         ws = new WebSocket(wsaddress);
         clients = {};
         id = 0;
